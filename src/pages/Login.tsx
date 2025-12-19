@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { login } from "../api/auth.api";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuthToken } from "../context/AuthContext";
 
 type LoginForm = {
   email: string;
@@ -10,11 +11,13 @@ type LoginForm = {
 export default function Login() {
   const { register, handleSubmit } = useForm<LoginForm>();
   const navigate = useNavigate();
+  const { setToken } = useAuthToken();
+
 
   const onSubmit = async (data: LoginForm) => {
     console.log("Logging in with data:", data);
-    const res = await login(data);
-    console.log(res)
+    const { data: res } = await login(data);
+    setToken(res.token); 
     // return;
     navigate("/");
   };

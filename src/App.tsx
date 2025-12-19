@@ -1,18 +1,30 @@
 import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Profile from "./pages/Profile";
+
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import Navbar from "./components/layout/Navbar";
-import { useSocket } from "./hooks/useSocket";
-import { useNotificationSocket } from "./hooks/useNotificationSocket";
+
 import { NotificationProvider } from "./context/NotificationContext";
+import { AuthProvider } from "./context/AuthContext"; // ✅ ADD
+import { useNotificationSocket } from "./hooks/useNotificationSocket";
+import { connectSocket } from "./socket";
+import { useAuthToken } from "./context/AuthContext";
 
 function AppInner() {
-  // ✅ hooks now run INSIDE provider
-  useSocket();
+  const { token } = useAuthToken();
+
+  useEffect(() => {
+    if (token) {
+      connectSocket();
+    }
+  }, [token]);
+
   useNotificationSocket();
 
   return (
@@ -34,8 +46,10 @@ function AppInner() {
 
 export default function App() {
   return (
-    <NotificationProvider>
-      <AppInner />
-    </NotificationProvider>
+    <AuthProvider>            {/* 🔑 MUST be outer */}
+      <NotificationProvider>
+        <AppInner />
+      </NotificationProvider>
+    </AuthProvider>
   );
 }

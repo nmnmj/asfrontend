@@ -3,6 +3,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { register as registerUser } from "../api/auth.api";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuthToken } from "../context/AuthContext";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -14,6 +15,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const navigate = useNavigate();
+  const { setToken } = useAuthToken();
 
   const {
     register,
@@ -24,8 +26,9 @@ export default function Register() {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    await registerUser(data);
-    navigate("/login");
+    const { data: res } = await registerUser(data);
+    setToken(res.token); // 🔑 store JWT
+    navigate("/");
   };
 
   return (
