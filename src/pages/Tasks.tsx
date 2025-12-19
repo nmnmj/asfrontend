@@ -6,6 +6,7 @@ import { getTasks, createTask, updateTask, deleteTask } from "../api/task.api";
 import TaskCard from "../components/tasks/TaskCard";
 import TaskForm from "../components/tasks/TaskForm";
 import type { Task } from "../types/task.types";
+import { toastError, toastSuccess } from "../utils/toast";
 
 type StatusFilter = Task["status"] | "ALL";
 type PriorityFilter = Task["priority"] | "ALL";
@@ -18,8 +19,7 @@ export default function Tasks() {
 
   // 🔹 FILTER STATE
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
-  const [priorityFilter, setPriorityFilter] =
-    useState<PriorityFilter>("ALL");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("ALL");
 
   // 🔹 SORT STATE
   const [sortOrder, setSortOrder] = useState<SortOrder>("ASC");
@@ -34,7 +34,7 @@ export default function Tasks() {
 
     socket.on("task:created", invalidate);
     socket.on("task:updated", invalidate);
-    socket.on("task:deleted", invalidate);  
+    socket.on("task:deleted", invalidate);
 
     return () => {
       socket.off("task:created", invalidate);
@@ -54,7 +54,11 @@ export default function Tasks() {
     mutationFn: createTask,
     onSuccess: () => {
       setEditingTask(null);
+      toastSuccess("Task created successfully");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err) => {
+      toastError(err, "Failed to create task");
     },
   });
 
@@ -63,14 +67,23 @@ export default function Tasks() {
       updateTask(id, data),
     onSuccess: () => {
       setEditingTask(null);
+      toastSuccess("Task updated");
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err) => {
+      toastError(err, "Failed to update task");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteTask,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["tasks"] }),
+    onSuccess: () => {
+      toastSuccess("Task deleted");
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+    onError: (err) => {
+      toastError(err, "Failed to delete task");
+    },
   });
 
   // 🔹 FILTER + SORT (DERIVED STATE)
@@ -78,11 +91,11 @@ export default function Tasks() {
     let result = [...tasks];
 
     if (statusFilter !== "ALL") {
-      result = result.filter(task => task.status === statusFilter);
+      result = result.filter((task) => task.status === statusFilter);
     }
 
     if (priorityFilter !== "ALL") {
-      result = result.filter(task => task.priority === priorityFilter);
+      result = result.filter((task) => task.priority === priorityFilter);
     }
 
     result.sort((a, b) => {
@@ -99,15 +112,15 @@ export default function Tasks() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold">Tasks</h1>
+    <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h1 className="text-lg font-semibold text-gray-800">Task Management</h1>
 
       {/* 🔹 FILTER & SORT CONTROLS */}
       <div className="flex flex-wrap gap-4">
         <select
           value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-          className="border rounded px-3 py-1"
+          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
           <option value="ALL">All Status</option>
           <option value="To Do">To Do</option>
@@ -118,10 +131,8 @@ export default function Tasks() {
 
         <select
           value={priorityFilter}
-          onChange={e =>
-            setPriorityFilter(e.target.value as PriorityFilter)
-          }
-          className="border rounded px-3 py-1"
+          onChange={(e) => setPriorityFilter(e.target.value as PriorityFilter)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
           <option value="ALL">All Priority</option>
           <option value="Low">Low</option>
@@ -132,8 +143,8 @@ export default function Tasks() {
 
         <select
           value={sortOrder}
-          onChange={e => setSortOrder(e.target.value as SortOrder)}
-          className="border rounded px-3 py-1"
+          onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
           <option value="ASC">Due Date ↑</option>
           <option value="DESC">Due Date ↓</option>
@@ -144,7 +155,7 @@ export default function Tasks() {
       <TaskForm
         key={editingTask?.id ?? "create"}
         initialData={editingTask ?? undefined}
-        onSubmit={async data => {
+        onSubmit={async (data) => {
           if (editingTask) {
             await updateMutation.mutateAsync({
               id: editingTask.id,
@@ -159,7 +170,7 @@ export default function Tasks() {
       {editingTask && (
         <button
           onClick={() => setEditingTask(null)}
-          className="text-sm text-gray-600 underline"
+          className="w-fit text-sm font-medium text-gray-600 hover:text-gray-800 hover:underline"
         >
           Cancel editing
         </button>
@@ -173,7 +184,7 @@ export default function Tasks() {
           </p>
         )}
 
-        {filteredTasks.map(task => (
+        {filteredTasks.map((task) => (
           <TaskCard
             key={task.id}
             task={task}

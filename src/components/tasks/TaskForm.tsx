@@ -13,95 +13,114 @@ type Props = {
 export default function TaskForm({ initialData, onSubmit }: Props) {
   const { data: users } = useQuery({
     queryKey: ["users"],
-    queryFn: getAllUsers
+    queryFn: getAllUsers,
   });
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting },
   } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: initialData
       ? {
           title: initialData.title,
           description: initialData.description,
-          dueDate: initialData.dueDate.slice(0, 16),    
+          dueDate: initialData.dueDate.slice(0, 16),
           priority: initialData.priority,
           status: initialData.status,
-          assignedToId: initialData.assignedToId
+          assignedToId: initialData.assignedToId,
         }
-      : undefined
+      : undefined,
   });
 
   const onSubmitHandler = async (data: TaskFormData) => {
     const payload = {
-        ...data,
-        dueDate: new Date(data.dueDate).toISOString()
+      ...data,
+      dueDate: new Date(data.dueDate).toISOString(),
     };
 
     await onSubmit(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmitHandler)} className="space-y-3">
+    <form
+      onSubmit={handleSubmit(onSubmitHandler)}
+      className="grid grid-cols-1 gap-3 md:grid-cols-2"
+    >
+      {/* Title */}
       <input
         {...register("title")}
-        placeholder="Title"
-        className="w-full rounded border p-2"
+        placeholder="Task Title"
+        className="col-span-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
 
+      {/* Description */}
       <textarea
         {...register("description")}
-        placeholder="Description"
-        className="w-full rounded border p-2"
+        placeholder="Task Description"
+        rows={2}
+        className="col-span-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
 
+      {/* Due Date */}
       <input
         type="datetime-local"
         {...register("dueDate")}
-        className="w-full rounded border p-2"
+        className="rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
 
-      <select {...register("priority")} className="w-full rounded border p-2">
+      {/* Priority */}
+      <select
+        {...register("priority")}
+        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
         <option value="Low">Low</option>
         <option value="Medium">Medium</option>
         <option value="High">High</option>
         <option value="Urgent">Urgent</option>
       </select>
 
-      <select {...register("status")} className="w-full rounded border p-2">
+      {/* Status */}
+      <select
+        {...register("status")}
+        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
         <option value="To Do">To Do</option>
         <option value="In Progress">In Progress</option>
         <option value="Review">Review</option>
         <option value="Completed">Completed</option>
       </select>
 
-      {/* ✅ Assigned User Dropdown */}
+      {/* Assigned User */}
       <select
         {...register("assignedToId")}
-        className="w-full rounded border p-2"
+        className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
       >
-        <option value="">Assign to user</option>
-        {users?.map(user => (
+        <option value="">Assign user</option>
+        {users?.map((user) => (
           <option key={user.id} value={user.id}>
-            {user.name} ({user.email})
+            {user.name}
           </option>
         ))}
       </select>
 
+      {/* Error */}
       {errors.assignedToId && (
-        <p className="text-sm text-red-500">
+        <p className="col-span-2 text-xs text-red-600">
           Assigned user is required
         </p>
       )}
 
-      <button
-        disabled={isSubmitting}
-        className="rounded bg-blue-600 px-4 py-2 text-white"
-      >
-        {isSubmitting ? "Saving..." : "Save Task"}
-      </button>
+      {/* Submit */}
+      <div className="col-span-2 flex justify-end">
+        <button
+          disabled={isSubmitting}
+          className="rounded-md bg-blue-600 px-5 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? "Saving..." : "Save Task"}
+        </button>
+      </div>
     </form>
   );
 }
